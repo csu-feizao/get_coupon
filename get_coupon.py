@@ -34,7 +34,7 @@ def get_page(cookie):
     url=urls[x-1]
     r=s.get(url,headers=headers)
 #    print(r.text)
-    cer=re.compile('<h1 class="ctxt02"><s class="icon-redbag"></s>(.*)~</h1>',flags=0)
+    cer=re.compile('<h1 class="ctxt02"><s class="icon-redbag"></s>(.*)</h1>',flags=0)
     strlist=cer.findall(r.text)
     print(strlist[0])
 
