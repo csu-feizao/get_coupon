@@ -36,7 +36,10 @@ def get_page(cookie):
 #    print(r.text)
     cer=re.compile('<h1 class="ctxt02"><s class="icon-redbag"></s>(.*)</h1>',flags=0)
     strlist=cer.findall(r.text)
-    print(strlist[0])
+    if not strlist:
+        print('未知错误')
+    else:
+        print(strlist[0])
 
 
 #模式1：对单个用户进行get操作
