@@ -4,9 +4,15 @@ import re,ntplib
 
 def get_ntptime():
     client=ntplib.NTPClient()
-    response=client.request('202.108.6.95')
-    my_timestamp=response.tx_time
-    return  my_timestamp
+    try:
+        response=client.request('202.108.6.95',timeout=1)
+    except ntplib.NTPException:
+        print('校正超时，重新校正...')
+        return get_ntptime()
+    else:
+        my_timestamp=response.tx_time
+        print('校正时间：',my_timestamp)
+        return  my_timestamp
 
 def timer():
     print('当前时间：',time.strftime('%Y-%m-%d %H;%M:%S',time.localtime(get_ntptime())))
