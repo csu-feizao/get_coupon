@@ -169,6 +169,7 @@ def loop_one_get():
     for i in range(loop_times):
         t=threading.Thread(target=get_page,args=(url,cookie))
         t.start()
+        time.sleep(3)
 
 #模式15：对单个用户进行循环post操作
 def loop_one_post():
@@ -185,12 +186,14 @@ def loop_all_get():
     loop_times=int(input('请输入循环次数：'))
     for i in range(loop_times):
         all_get()
+        #time.sleep(1)
 
 #模式16：对所有用户进行循环post操作
 def loop_all_post():
     loop_times=int(input('请输入循环次数：'))
     for i in range(loop_times):
         all_post()
+        time.sleep(1)
 
 #模式7：对单个用户进行定时循环get操作
 def loop_time_one_get():
@@ -276,7 +279,7 @@ if y in operator.keys():
         for password in passwords:
             if '?' in password:
                 password.replace(' ','%3F')
-    token='334187414'
+    token=get_token()
     f(y)
 elif y==0:
     exit()
