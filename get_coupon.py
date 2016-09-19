@@ -31,14 +31,9 @@ def timer():
         time.sleep(1)
 
 def get_userdata(file_url):
-    data=[]
     with open(file_url,'r') as f1:
         flists=f1.readlines()
-        for flist in flists:
-            if flist[-1]=='\n':
-                flist=flist[0:-1]
-            data.append(flist)
-        data=tuple(data)
+        data=tuple([flist.strip() for flist in flists])
         return data
 
 def get_token():
@@ -77,7 +72,7 @@ def get_page(url,cookie):
             print(strlist[0])
 
 def post_page(cookie,password):
-    global token
+    global token,itemId
     headers={
     'Accept':'*/*',
     'Accept-Encoding':'gzip, deflate',
@@ -92,15 +87,12 @@ def post_page(cookie,password):
     }
     s=requests.session()
     s.headers=headers
-    data='itemId=25648761&password='+password+'&token='+token
+    data='itemId={}&password={}&token={}'.format(itemId,password,token)
     try:
         r=s.post('http://vip.jd.com/bean/exchangeCoupon.html',data=data,timeout=1)
         if '提交错误' in r.text:
             token=get_token()
             return post_page(cookie,password)
-        if 'true' in r.text:
-            with open('C:\\Users\肥皂\Desktop\\result.txt','a') as fw:
-                fw.write(r.text)
     except:
         return post_page(cookie,password)
     else:
@@ -169,7 +161,7 @@ def loop_one_get():
     for i in range(loop_times):
         t=threading.Thread(target=get_page,args=(url,cookie))
         t.start()
-        time.sleep(3)
+        #time.sleep(3)
 
 #模式15：对单个用户进行循环post操作
 def loop_one_post():
@@ -193,7 +185,7 @@ def loop_all_post():
     loop_times=int(input('请输入循环次数：'))
     for i in range(loop_times):
         all_post()
-        time.sleep(1)
+        time.sleep(5)
 
 #模式7：对单个用户进行定时循环get操作
 def loop_time_one_get():
@@ -237,7 +229,7 @@ def loop_forever_one_post():
     password=passwords[n-1]
     while True:
         post_page(cookie,password)
-        #time.sleep(1)
+        time.sleep(5)
 
 operator={1:one_get,2:all_get,3:time_one_get,4:time_all_get,5:loop_one_get,6:loop_all_get,7:loop_time_one_get,8:loop_time_all_get,11:one_post,12:all_post,13:time_one_post,14:time_all_post,15:loop_one_post,16:loop_all_post,17:loop_time_one_post,18:loop_time_all_post,19:loop_forever_one_post}
 
@@ -280,6 +272,7 @@ if y in operator.keys():
             if '?' in password:
                 password.replace(' ','%3F')
     token=get_token()
+    itemId='25649604'
     f(y)
 elif y==0:
     exit()
