@@ -42,6 +42,9 @@ class MyInfo(object):
     def set_urls(self,urls):
         self.urls=self.get_userdata(urls)
 
+    def set_url(self,m):
+        self.url=self.urls[m-1]
+
     def set_cookies(self,cookies_url):
         self.cookies=self.get_userdata(cookies_url)
 
@@ -59,16 +62,16 @@ class MyInfo(object):
 
 
 class GetCoupon(MyInfo):
-    def get_page(self,m):
+    def get_page(self):
         s=requests.session()
         s.headers=self.headers
         try:
-            r=s.get(self.urls[m-1],timeout=1)
+            r=s.get(self.url,timeout=1)
         except requests.TooManyRedirects:
             print('cookie失效，原因不明（可能是半白号，访问过快触发京东保护机制），请重新提取cookie')
         except requests.ConnectTimeout:
             print('超时重试中,若依然如此请检查网络')
-            return self.get_page(m)
+            return self.get_page()
         else:
             cer=re.compile('<h1 class="ctxt02"><s class="icon-redbag"></s>(.*)</h1>',flags=0)
             strlist=cer.findall(r.text)
@@ -77,30 +80,33 @@ class GetCoupon(MyInfo):
             else:
                 print(strlist[0])
 
-    def one_get(self,n,m):
+    def one_get(self,n):
         self.set_headers(self.cookies[n-1])
-        self.get_page(m)
+        self.get_page()
 
-    def loop_one_get(self,n,m,loop_times):
+    def loop_one_get(self,n,loop_times):
         self.set_headers(self.cookies[n-1])
         for i in range(loop_times):
-            t=threading.Thread(target=self.get_page,args=(m,))
+            t=threading.Thread(target=self.get_page)
             t.start()
 
-    def all_get(self,m):
+    def all_get(self):
         for cookie in self.cookies:
             self.set_headers(cookie)
-            t=threading.Thread(target=self.get_page,args=(m,))
+            t=threading.Thread(target=self.get_page)
             t.start()
 
-    def loop_all_get(self,m,loop_times):
+    def loop_all_get(self,loop_times):
         for i in range(loop_times):
-            self.all_get(m)
+            self.all_get()
 
 
 class PostCoupon(MyInfo):
     def set_passwords(self,passwords_url):
         self.passwords=self.get_userdata(passwords_url)
+
+    def set_password(self,n):
+        self.password=self.passwords[n-1]
 
     def set_itemId(self,itemId):
         self.itemId=itemId
@@ -112,43 +118,45 @@ class PostCoupon(MyInfo):
         self.token=cer.findall(r.text)[0]
         print('token='+self.token)
 
-    def post_page(self,password):
+    def post_page(self):
         s=requests.session()
         s.headers=self.headers
-        self.data='itemId={}&password={}&token={}'.format(self.itemId,password,self.token)
+        self.data='itemId={}&password={}&token={}'.format(self.itemId,self.password,self.token)
         try:
             r=s.post('http://vip.jd.com/bean/exchangeCoupon.html',data=self.data,timeout=1)
             if '提交错误' in r.text:
                 self.get_token()
-                return self.post_page(password)
+                return self.post_page()
         except:
-            return self.post_page(password)
+            return self.post_page()
         else:
             print(r.text)
 
-    def one_post(self,n,m):
+    def one_post(self,n):
         self.set_headers(self.cookies[n-1])
         self.headers['Content-Type']='application/x-www-form-urlencoded'
-        self.post_page(m[n-1])
+        self.set_password(n)
+        self.post_page()
 
-    def loop_one_post(self,n,m,loop_times):
+    def loop_one_post(self,n,loop_times):
         self.set_headers(self.cookies[n-1])
         self.headers['Content-Type']='application/x-www-form-urlencoded'
+        self.set_password(n)
         for i in range(loop_times):
-            t=threading.Thread(target=self.post_page,args=(m[n-1],))
+            t=threading.Thread(target=self.post_page)
             t.start()
 
-    def all_post(self,m):
+    def all_post(self):
         for i in range(len(self.passwords)):
-            password=m[i]
+            self.password=self.passwords[i]
             self.set_headers(self.cookies[i])
             self.headers['Content-Type']='application/x-www-form-urlencoded'
-            t=threading.Thread(target=self.post_page,args=(password,))
+            t=threading.Thread(target=self.post_page)
             t.start()
 
-    def loop_all_post(self,m,loop_times):
+    def loop_all_post(self,loop_times):
         for i in range(loop_times):
-            self.all_post(m)
+            self.all_post()
 
 
 class Coupon(Time,GetCoupon,PostCoupon):
@@ -170,45 +178,45 @@ class Coupon(Time,GetCoupon,PostCoupon):
         if name=='1':
             name='get'
             m=int(input('请选择第m个url：'))
+            self.set_url(m)
         elif name=='2':
             name='post'
             itemId=input('请输入itemId(参考http://vip.jd.com/bean/(itemId).html)：')
             self.set_itemId(itemId)
             self.get_token()
             self.set_passwords('C:\\Users\肥皂\Desktop\\password.txt')
-            m=self.passwords
         else:
             print('输入错误，请重新输入！')
             return self.run()
         y=int(input('请选择模式（y）：'))
         if y==1:
             n=int(input('请选择第n个用户操作：'))
-            eval('self.one_{}'.format(name))(n,m)
+            eval('self.one_{}'.format(name))(n)
         elif y==2:
-            eval('self.all_{}'.format(name))(m)
+            eval('self.all_{}'.format(name))()
         elif y==3:
             n=int(input('请选择第n个用户操作：'))
             loop_times=int(input('请输入循环次数：'))
-            eval('self.loop_one_{}'.format(name))(n,m,loop_times)
+            eval('self.loop_one_{}'.format(name))(n,loop_times)
         elif y==4:
             loop_times=int(input('请输入循环次数：'))
-            eval('self.loop_all_{}'.format(name))(m,loop_times)
+            eval('self.loop_all_{}'.format(name))(loop_times)
         elif y==5:
             n=int(input('请选择第n个用户操作：'))
             self.timer()
-            eval('self.one_{}'.format(name))(n,m)
+            eval('self.one_{}'.format(name))(n)
         elif y==6:
             self.timer()
-            eval('self.all_{}'.format(name))(m)
+            eval('self.all_{}'.format(name))()
         elif y==7:
             n=int(input('请选择第n个用户操作：'))
             loop_times=int(input('请输入循环次数：'))
             self.timer()
-            eval('self.loop_one_{}'.format(name))(n,m,loop_times)
+            eval('self.loop_one_{}'.format(name))(n,loop_times)
         elif y==8:
             loop_times=int(input('请输入循环次数：'))
             self.timer()
-            eval('self.loop_all_{}'.format(name))(m,loop_times)
+            eval('self.loop_all_{}'.format(name))(loop_times)
         else:
             print('模式输入错误，请重新输入！')
             return self.run()
