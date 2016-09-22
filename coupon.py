@@ -33,20 +33,18 @@ class Time(object):
 
 
 class MyInfo(object):
+    def __init__(self):
+        self.urls=self.get_userdata('C:\\Users\肥皂\Desktop\\url.txt')
+        self.cookies=self.get_userdata('C:\\Users\肥皂\Desktop\\ck.txt')
+
     def get_userdata(self,file_url):
         with open(file_url,'r') as f1:
-            flists=f1.readlines()
-            data=tuple([flist.strip() for flist in flists])
+            my_lists=f1.readlines()
+            data=tuple([flist.strip() for flist in my_lists])
             return data
-
-    def set_urls(self,urls):
-        self.urls=self.get_userdata(urls)
 
     def set_url(self,m):
         self.url=self.urls[m-1]
-
-    def set_cookies(self,cookies_url):
-        self.cookies=self.get_userdata(cookies_url)
 
     def set_headers(self,cookie):
         self.headers={
@@ -66,12 +64,13 @@ class GetCoupon(MyInfo):
         s=requests.session()
         s.headers=self.headers
         try:
-            r=s.get(self.url,timeout=1)
+            r=s.get(self.url,timeout=10)
         except requests.TooManyRedirects:
             print('cookie失效，原因不明（可能是半白号，访问过快触发京东保护机制），请重新提取cookie')
-        except requests.ConnectTimeout:
+        except (requests.ConnectTimeout,requests.ReadTimeout):
             print('超时重试中,若依然如此请检查网络')
-            return self.get_page()
+        except:
+            pass
         else:
             cer=re.compile('<h1 class="ctxt02"><s class="icon-redbag"></s>(.*)</h1>',flags=0)
             strlist=cer.findall(r.text)
@@ -123,12 +122,14 @@ class PostCoupon(MyInfo):
         s.headers=self.headers
         self.data='itemId={}&password={}&token={}'.format(self.itemId,self.password,self.token)
         try:
-            r=s.post('http://vip.jd.com/bean/exchangeCoupon.html',data=self.data,timeout=1)
+            r=s.post('http://vip.jd.com/bean/exchangeCoupon.html',data=self.data,timeout=10)
             if '提交错误' in r.text:
                 self.get_token()
                 return self.post_page()
+        except (requests.ConnectTimeout,requests.ReadTimeout):
+            print('超时重试中,若依然如此请检查网络')
         except:
-            return self.post_page()
+            pass
         else:
             print(r.text)
 
@@ -161,6 +162,7 @@ class PostCoupon(MyInfo):
 
 class Coupon(Time,GetCoupon,PostCoupon):
     def __init__(self):
+        MyInfo.__init__(self)
         print('*===============请选择操作模式================*')
         print('*          (1)单个用户                       *')
         print('*          (2)所有用户                       *')
@@ -170,11 +172,10 @@ class Coupon(Time,GetCoupon,PostCoupon):
         print('*          (6)所有用户 and 定时              *')
         print('*          (7)单个用户 and 定时 and 循环     *')
         print('*          (8)所有用户 and 定时 and 循环     *')
-        self.set_urls('C:\\Users\肥皂\Desktop\\url.txt')
-        self.set_cookies('C:\\Users\肥皂\Desktop\\ck.txt')
+        print('*===========================================*')
 
     def run(self):
-        name=input('请选择（1）get或（2）post：').strip()
+        name=input('请选择（1）get,（2）post（0）退出：').strip()
         if name=='1':
             name='get'
             m=int(input('请选择第m个url：'))
@@ -185,6 +186,9 @@ class Coupon(Time,GetCoupon,PostCoupon):
             self.set_itemId(itemId)
             self.get_token()
             self.set_passwords('C:\\Users\肥皂\Desktop\\password.txt')
+        elif name=='0':
+            print('退出成功')
+            exit()
         else:
             print('输入错误，请重新输入！')
             return self.run()
@@ -220,6 +224,8 @@ class Coupon(Time,GetCoupon,PostCoupon):
         else:
             print('模式输入错误，请重新输入！')
             return self.run()
+        time.sleep(1)
+        return self.__init__(),self.run()
 
 if __name__=='__main__':
     c=Coupon()
