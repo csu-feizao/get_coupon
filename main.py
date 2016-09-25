@@ -5,21 +5,21 @@ def main():
     print('*          (2)查商品信息                      *')
     print('*          (0)退出                           *')
     print('*============================================*')
-    do_type=input('请输入您的选择').strip()
+    do_type=input('请输入您的选择：').strip()
     if do_type=='1':
         c=coupon.Coupon()
         c.run()
+        return main()
     elif do_type=='2':
         s=stocks.Stock()
         s.get_price()
         s.get_stock()
+        return main()
     elif do_type=='0':
         print('退出成功')
-        exit()
     else:
         print('您的输入有误，请重新输入！')
         return main()
 
 if __name__=='__main__':
     main()
-

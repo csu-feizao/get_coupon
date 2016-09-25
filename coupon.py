@@ -196,6 +196,5 @@ class Coupon(timing.Time,GetCoupon,PostCoupon):
         else:
             print('模式输入错误，请重新输入！')
             return self.run()
-        time.sleep(3)
-        return self.__init__(),self.run()
+        time.sleep(5)
 
