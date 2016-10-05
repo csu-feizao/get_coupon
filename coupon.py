@@ -65,8 +65,8 @@ class GetCoupon(MyInfo):
     def all_get(self):
         for cookie in self.cookies:
             self.set_headers(cookie)
-            t=threading.Thread(target=self.get_page)
-            t.start()
+            p=Process(target=self.get_page)
+            p.start()
 
     def cookie_loop(self,loop_times):
         for i in range(loop_times):
@@ -134,8 +134,8 @@ class PostCoupon(MyInfo):
             self.password=self.passwords[i]
             self.set_headers(self.cookies[i])
             self.headers['Content-Type']='application/x-www-form-urlencoded'
-            t=threading.Thread(target=self.post_page)
-            t.start()
+            p=Process(target=self.post_page)
+            p.start()
 
     def loop(self,loop_times):
         for i in range(loop_times):
