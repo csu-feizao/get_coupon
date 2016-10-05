@@ -1,6 +1,7 @@
 import requests
 import time,threading
 import re
+from multiprocessing import Process
 from get_coupon import timing
 
 
@@ -67,9 +68,18 @@ class GetCoupon(MyInfo):
             t=threading.Thread(target=self.get_page)
             t.start()
 
-    def loop_all_get(self,loop_times):
+    def cookie_loop(self,loop_times):
         for i in range(loop_times):
-            self.all_get()
+            #print('thread',i)
+            t=threading.Thread(target=self.get_page)
+            t.start()
+
+    def loop_all_get(self,loop_times):
+        for cookie in self.cookies:
+            self.set_headers(cookie)
+            #print('process')
+            p=Process(target=self.cookie_loop,args=(loop_times,))
+            p.start()
 
 
 class PostCoupon(MyInfo):
@@ -127,9 +137,20 @@ class PostCoupon(MyInfo):
             t=threading.Thread(target=self.post_page)
             t.start()
 
-    def loop_all_post(self,loop_times):
+    def loop(self,loop_times):
         for i in range(loop_times):
-            self.all_post()
+            #print('thread',i)
+            t=threading.Thread(target=self.post_page)
+            t.start()
+
+    def loop_all_post(self,loop_times):
+        for i in range(len(self.passwords)):
+            self.password=self.passwords[i]
+            self.set_headers(self.cookies[i])
+            self.headers['Content-Type']='application/x-www-form-urlencoded'
+            #print('process')
+            p=Process(target=self.loop,args=(loop_times,))
+            p.start()
 
 
 class Coupon(timing.Time,GetCoupon,PostCoupon):
