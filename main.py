@@ -1,4 +1,8 @@
+import sys
+sys.path.append(r'D:\Program Files (x86)\JetBrains\PyCharm Community Edition 5.0.4\jre\jre\bin\PycharmProjects\untitled')
+
 from get_coupon import coupon,stocks
+
 def main():
     print('*===============请选择操作模式================*')
     print('*          (1)领取优惠券                      *')
