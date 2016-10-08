@@ -1,4 +1,6 @@
 import sys
+
+#向path添加文件夹所在路径
 sys.path.append(r'D:\Program Files (x86)\JetBrains\PyCharm Community Edition 5.0.4\jre\jre\bin\PycharmProjects\untitled')
 
 from get_coupon import coupon,stocks
