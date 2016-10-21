@@ -1,37 +1,37 @@
-import requests
+﻿import requests
 import json
 import mysql.connector
 
 class reviewer(object):
     def __init__(self):
-        self.score_dict={1:'差评',2:'中评',3:'好评'}
+        self.flag='0'
+        self.score_dict={1:'negative',2:'neutral',3:'positive'}
 
-    def get_referenceId(self):
-        self.product_id=input('请输入要抓取的京东商品ID：')
-
-    def save_data(self):
+    def connect_mysql(self):
         self.conn=mysql.connector.connect(user='root',password='')
         self.cursor=self.conn.cursor()
         self.cursor.execute('create database if not exists jd')
         self.conn.connect(database='jd')
-        self.connnect()
+        self.create_table()
 
-    def connnect(self):
+    def create_table(self):
         try:
-            self.cursor.execute('create table %s (id varchar(200) primary key,nickname varchar(20),content varchar(500),score char(1))' %('goods_'+self.product_id))
+            self.cursor.execute('create table %s (id varchar(200) primary key,nickname varchar(20),content varchar(500),score char(1),classify varchar(20))' %('goods_'+self.product_id))
         except mysql.connector.Error as e:
-            flag=input('您已爬取过该商品的评价，您确定要重新爬取吗？y/n:')
-            if flag=='y':
+            self.flag=input('您已爬取过该商品的评价，您确定要重新爬取吗？y/n:')
+            if self.flag=='y':
                 self.cursor.execute('drop table %s' %('goods_'+self.product_id))
-                return self.connnect()
+                return self.create_table()
+            elif self.flag=='n':
+                return
             else:
-                print('程序退出')
-                exit()
+                print('输入错误！')
+                return self.create_table()
         except Exception as e:
             print(e)
             exit(-1)
 
-    def find_review(self,score,max_page=100):
+    def find_review(self,score,max_page=20):
         page=0
         page_data=''
         while True:
@@ -46,23 +46,23 @@ class reviewer(object):
                 for review in data['comments']:
                     if review['referenceId']==self.product_id:
                         self.count+=1
-                        do='insert into goods_'+self.product_id+' (id,nickname,content,score) values(%s,%s,%s,%s)'
+                        do='insert into goods_'+self.product_id+' (id,nickname,content,score,classify) values(%s,%s,%s,%s,%s)'
                         try:
-                            self.cursor.execute(do,(str(self.count),review['nickname'],review['content'],review['score']))
+                            self.cursor.execute(do,(str(self.count),review['nickname'],review['content'],review['score'],self.score_dict[score]))
                             self.conn.commit()
                         except Exception as e:
                             print(e)
-                            pass
                         print(self.count,review['nickname'],review['content'],review['score'])
                 page+=1
             else:
                 return page
 
     def run_review(self):
-        self.get_referenceId()
-        self.save_data()
-        self.count=0
-        max_page=self.find_review(score=1)
-        max_page+=self.find_review(score=2)
-        self.find_review(score=3,max_page=max_page)
+        self.product_id=input('请输入要查询的商品ID：')
+        self.connect_mysql()
+        if self.flag=='0' or self.flag=='y':
+            self.count=0
+            self.find_review(score=1)
+            self.find_review(score=2)
+            self.find_review(score=3)
         self.conn.close()
