@@ -1,7 +1,7 @@
 import requests
 import time,threading
 import re
-from multiprocessing import Process
+from multiprocessing import Process,Pool
 from get_coupon import timing
 
 
@@ -31,6 +31,13 @@ class MyInfo(object):
                         'User-Agent':'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/50.0.2743.116 Safari/537.36'
                         }
 
+    def pool_loop(self,loop_times,function):
+        pool=Pool(4)
+        for i in range(loop_times):
+            pool.apply_async(function)
+        pool.close()
+        pool.join()
+
 
 class GetCoupon(MyInfo):
     def get_page(self):
@@ -58,9 +65,7 @@ class GetCoupon(MyInfo):
 
     def loop_one_get(self,n,loop_times):
         self.set_headers(self.cookies[n-1])
-        for i in range(loop_times):
-            t=threading.Thread(target=self.get_page)
-            t.start()
+        self.pool_loop(loop_times,self.get_page)
 
     def all_get(self):
         for cookie in self.cookies:
@@ -68,17 +73,10 @@ class GetCoupon(MyInfo):
             p=Process(target=self.get_page)
             p.start()
 
-    def cookie_loop(self,loop_times):
-        for i in range(loop_times):
-            #print('thread',i)
-            t=threading.Thread(target=self.get_page)
-            t.start()
-
     def loop_all_get(self,loop_times):
         for cookie in self.cookies:
             self.set_headers(cookie)
-            #print('process')
-            p=Process(target=self.cookie_loop,args=(loop_times,))
+            p=Process(target=self.pool_loop,args=(loop_times,self.get_page))
             p.start()
 
 
@@ -125,9 +123,7 @@ class PostCoupon(MyInfo):
         self.set_headers(self.cookies[n-1])
         self.headers['Content-Type']='application/x-www-form-urlencoded'
         self.set_password(n)
-        for i in range(loop_times):
-            t=threading.Thread(target=self.post_page)
-            t.start()
+        self.pool_loop(loop_times,self.post_page)
 
     def all_post(self):
         for i in range(len(self.passwords)):
@@ -137,19 +133,12 @@ class PostCoupon(MyInfo):
             p=Process(target=self.post_page)
             p.start()
 
-    def loop(self,loop_times):
-        for i in range(loop_times):
-            #print('thread',i)
-            t=threading.Thread(target=self.post_page)
-            t.start()
-
     def loop_all_post(self,loop_times):
         for i in range(len(self.passwords)):
             self.password=self.passwords[i]
             self.set_headers(self.cookies[i])
             self.headers['Content-Type']='application/x-www-form-urlencoded'
-            #print('process')
-            p=Process(target=self.loop,args=(loop_times,))
+            p=Process(target=self.pool_loop,args=(loop_times,self.post_page))
             p.start()
 
 
