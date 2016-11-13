@@ -1,4 +1,5 @@
-import requests,json,re
+import requests,json,re,winsound,time
+
 class Stock(object):
     def __init__(self):
         self.province_dict={value:key for key,value in {
@@ -37,6 +38,21 @@ class Stock(object):
         if provinceName in self.province_dict.keys():
             r=json.loads(requests.get('https://c0.3.cn/stock?skuId={skuId}&cat=1316,1385,1408&area={province}_2805_2855'.format(skuId=self.skuId,province=str(self.province_dict[provinceName]))+'&extraParam={%22originid%22:%221%22}').text)
             print(r['stock']['area']['provinceName'],'：',r['stock']['StockStateName'])
+            if r['stock']['StockStateName']=='无货':
+                flag=input('商品暂时无货，是否循环监控？y/n:')
+                if flag=='y':
+                    while True:
+                        r=json.loads(requests.get('https://c0.3.cn/stock?skuId={skuId}&cat=1316,1385,1408&area={province}_2805_2855'.format(skuId=self.skuId,province=str(self.province_dict[provinceName]))+'&extraParam={%22originid%22:%221%22}').text)
+                        print(r['stock']['area']['provinceName'],'：',r['stock']['StockStateName'])
+                        if r['stock']['StockStateName']=='现货':
+                            for i in range(4):
+                                winsound.Beep(800,250)
+                                print(r['stock']['area']['provinceName'],'：',r['stock']['StockStateName'])
+                                time.sleep(1)
+                            time.sleep(0.3)
+                            winsound.Beep(1600,500)
+                            break
+                        time.sleep(5)
         else:
             print('您的输入有误，请重新输入！')
             return self.get_stock()
